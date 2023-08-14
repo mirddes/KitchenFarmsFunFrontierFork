@@ -1,9 +1,9 @@
 - type: entity
   name: hydroponics tray
   parent: [ hydroponicsSoil ]
-  id: hydroponicsTrayAnchored
-  suffix: anchored
-  description: An anchored interstellar-grade space farmplot allowing for rapid growth and selective breeding of crops. Just... keep in mind the space weeds.
+  id: hydroponicsTrayHeavy
+  suffix: heavy
+  description: An heavy interstellar-grade space farmplot allowing for rapid growth and selective breeding of crops. Just... keep in mind the space weeds.
   components:
   - type: Fixtures
     fixtures:
@@ -15,8 +15,6 @@
         hard: true
         mask:
         - MachineMask
-        layer:
-        - MachineLayer
   - type: Sprite
     layers:
       - sprite: _NF/Structures/Hydroponics/containers.rsi
@@ -81,5 +79,3 @@
     range: 5
     sound:
       path: /Audio/Ambience/Objects/flowing_water_open.ogg
-  - type: Climbable
-
