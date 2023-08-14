@@ -14,8 +14,6 @@
         hard: true
         mask:
         - MachineMask
-        layer:
-        - MachineLayer
   - type: Anchorable
   - type: Pullable
   - type: Sprite
@@ -88,4 +86,3 @@
     range: 5
     sound:
       path: /Audio/Ambience/Objects/flowing_water_open.ogg
-  - type: Climbable

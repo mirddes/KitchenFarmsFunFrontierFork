@@ -15,8 +15,6 @@
         hard: true
         mask:
         - MachineMask
-        layer:
-        - MachineLayer
   - type: Sprite
     layers:
       - sprite: _NF/Structures/Hydroponics/containers.rsi
@@ -81,4 +79,3 @@
     range: 5
     sound:
       path: /Audio/Ambience/Objects/flowing_water_open.ogg
-  - type: Climbable
