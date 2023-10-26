@@ -2,13 +2,13 @@ using Content.Server.Database;
 using Content.Server.Players;
 using Content.Shared.GameTicking;
 using Content.Shared.GameWindow;
+using Content.Shared.Players;
 using Content.Shared.Preferences;
 using JetBrains.Annotations;
 using Robust.Server.Player;
 using Robust.Shared.Enums;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
-using PlayerData = Content.Server.Players.PlayerData;
 
 namespace Content.Server.GameTicking
 {
@@ -27,15 +27,18 @@ namespace Content.Server.GameTicking
         {
             var session = args.Session;
 
-            if (_mind.TryGetMind(session.UserId, out var mind))
+            if (_mind.TryGetMind(session.UserId, out var mindId, out var mind))
             {
-                if (args.OldStatus == SessionStatus.Connecting && args.NewStatus == SessionStatus.Connected)
+                if (args.NewStatus != SessionStatus.Disconnected)
+                {
                     mind.Session = session;
+                    _pvsOverride.AddSessionOverride(mindId.Value, session);
+                }
 
                 DebugTools.Assert(mind.Session == session);
             }
 
-            DebugTools.Assert(session.GetMind() == mind);
+            DebugTools.Assert(session.GetMind() == mindId);
 
             switch (args.NewStatus)
             {
@@ -47,7 +50,8 @@ namespace Content.Server.GameTicking
                     if (session.Data.ContentDataUncast == null)
                     {
                         var data = new PlayerData(session.UserId, args.Session.Name);
-                        data.Mind = mind;
+                        data.Mind = mindId;
+                        data.Whitelisted = await _db.GetWhitelistStatusAsync(session.UserId); // Nyanotrasen - Whitelist
                         session.Data.ContentDataUncast = data;
                     }
 
@@ -109,7 +113,10 @@ namespace Content.Server.GameTicking
                 {
                     _chatManager.SendAdminAnnouncement(Loc.GetString("player-leave-message", ("name", args.Session.Name)));
                     if (mind != null)
+                    {
+                        _pvsOverride.ClearOverride(mindId!.Value);
                         mind.Session = null;
+                    }
 
                     _userDb.ClientDisconnected(session);
                     break;
@@ -120,27 +127,9 @@ namespace Content.Server.GameTicking
 
             async void SpawnWaitDb()
             {
-                // Temporary debugging code to fix a random test failures
-                var initialStatus = _userDb.GetLoadTask(session).Status;
-                var prefsLoaded = _prefsManager.HavePreferencesLoaded(session);
-                DebugTools.Assert(session.Status == SessionStatus.InGame);
-
                 await _userDb.WaitLoadComplete(session);
 
-                try
-                {
-                    SpawnPlayer(session, EntityUid.Invalid);
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Caught exception while trying to spawn a player.\n" +
-                              $"Initial DB task status: {initialStatus}\n" +
-                              $"Prefs initially loaded: {prefsLoaded}\n" +
-                              $"DB task status: {_userDb.GetLoadTask(session).Status}\n" +
-                              $"Prefs loaded: {_prefsManager.HavePreferencesLoaded(session)}\n" +
-                              $"Exception: \n{e}");
-                    throw;
-                }
+                SpawnPlayer(session, EntityUid.Invalid);
             }
 
             async void SpawnObserverWaitDb()
@@ -163,9 +152,10 @@ namespace Content.Server.GameTicking
             return (HumanoidCharacterProfile) _prefsManager.GetPreferences(p.UserId).SelectedCharacter;
         }
 
-        public void PlayerJoinGame(IPlayerSession session)
+        public void PlayerJoinGame(IPlayerSession session, bool silent = false)
         {
-            _chatManager.DispatchServerMessage(session, Loc.GetString("game-ticker-player-join-game-message"));
+            if (!silent)
+                _chatManager.DispatchServerMessage(session, Loc.GetString("game-ticker-player-join-game-message"));
 
             _playerGameStatuses[session.UserId] = PlayerGameStatus.JoinedGame;
             _db.AddRoundPlayers(RoundId, session.UserId);

@@ -81,7 +81,7 @@
   - type: ResistLocker
 
 - type: entity
-  parent: CrateGeneric
+  parent: CrateBaseWeldable
   id: CrateBaseSecure
   components:
   - type: Lock
@@ -117,3 +117,8 @@
     node: cratesecure
     containers:
     - entity_storage
+  - type: Reflect
+    reflects:
+    - Energy
+    reflectProb: 0.2
+    spread: 90

@@ -74,6 +74,11 @@
       ShipyardConsole-targetId: !type:ContainerSlot {}
   - type: Anchorable
     delay: 999999
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 0
 
 - type: entity
   id: ComputerShipyardSecurity
@@ -98,6 +103,70 @@
       state: shipyard_security      
     - map: ["computerLayerKeys"]
       state: telesci_key
+
+- type: entity
+  id: ComputerShipyardBlackMarket
+  parent: ComputerShipyard
+  name: black market shipyard console
+  description: Used to buy ships not available through other means. Has a sticker that says SALES TAX 30%
+  components:
+  - type: ActivatableUI
+    key: enum.ShipyardConsoleUiKey.BlackMarket
+  - type: UserInterface
+    interfaces:
+    - key: enum.ShipyardConsoleUiKey.BlackMarket
+      type: ShipyardConsoleBoundUserInterface
+  - type: Sprite
+    sprite: _NF/Structures/Machines/computers.rsi
+    layers:
+    - map: ["computerLayerBody"]
+      state: computer_blackmarket
+    - map: ["computerLayerKeyboard"]
+      state: generic_keyboard
+    - map: ["computerLayerScreen"]
+      state: shipyard_blackmarket   
+    - map: ["computerLayerKeys"]
+      state: blackmarket_key
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 300
+      behaviors:
+        - !type:DoActsBehavior
+          acts: ["Destruction"]
+
+- type: entity
+  id: ComputerShipyardExpedition
+  parent: ComputerShipyard
+  name: expedition shipyard console
+  description: Used to buy ships outfitted for planetary expeditions
+  components:
+  - type: ActivatableUI
+    key: enum.ShipyardConsoleUiKey.Expedition
+  - type: UserInterface
+    interfaces:
+    - key: enum.ShipyardConsoleUiKey.Expedition
+      type: ShipyardConsoleBoundUserInterface
+  - type: Sprite
+    sprite: _NF/Structures/Machines/computers.rsi
+    layers:
+    - map: ["computerLayerBody"]
+      state: computer_blackmarket
+    - map: ["computerLayerKeyboard"]
+      state: generic_keyboard
+    - map: ["computerLayerScreen"]
+      state: shipyard_blackmarket   
+    - map: ["computerLayerKeys"]
+      state: blackmarket_key
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 500
+      behaviors:
+        - !type:DoActsBehavior
+          acts: ["Destruction"]
 
 - type: entity
   name: cargo sale computer
@@ -165,6 +234,11 @@
     delay: 999999
   - type: MarketModifier
     mod: 1.00
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 0
 
 - type: entity
   parent: ComputerPalletConsoleNFNormalMarket

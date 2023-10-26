@@ -7526,7 +7526,7 @@ entities:
     - pos: 5.4605694,-3.509058
       parent: 1
       type: Transform
-- proto: hydroponicsTray
+- proto: hydroponicsTrayAnchored
   entities:
   - uid: 1078
     components:
@@ -8888,13 +8888,6 @@ entities:
   - uid: 1272
     components:
     - pos: -3.5,-22.5
-      parent: 1
-      type: Transform
-- proto: SpawnPointCyborg
-  entities:
-  - uid: 1728
-    components:
-    - pos: -6.5,-24.5
       parent: 1
       type: Transform
 - proto: SpawnPointLatejoin

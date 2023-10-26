@@ -16,6 +16,7 @@ using Content.Shared.CCVar;
 using Content.Shared.Database;
 using Content.Shared.Shuttles.Components;
 using Content.Shared.Shuttles.Events;
+using Content.Shared.Tag;
 using Content.Shared.Tiles;
 using Robust.Server.GameObjects;
 using Robust.Server.Maps;
@@ -60,6 +61,7 @@ public sealed partial class EmergencyShuttleSystem : EntitySystem
 
     private bool _emergencyShuttleEnabled;
 
+    [ValidatePrototypeId<TagPrototype>]
     private const string DockTag = "DockEmergency";
 
     public override void Initialize()
@@ -163,7 +165,7 @@ public sealed partial class EmergencyShuttleSystem : EntitySystem
 
         RaiseNetworkEvent(new EmergencyShuttlePositionMessage()
         {
-            StationUid = targetGrid,
+            StationUid = GetNetEntity(targetGrid),
             Position = config.Area,
         });
     }
@@ -373,6 +375,7 @@ public sealed partial class EmergencyShuttleSystem : EntitySystem
         component.EmergencyShuttle = shuttle;
         EnsureComp<ProtectedGridComponent>(shuttle.Value);
         EnsureComp<PreventPilotComponent>(shuttle.Value);
+        // EnsureComp<StationEmpImmuneComponent>(shuttle.Value); Enable in the case we want to ensure EMP immune grid
     }
 
     private void OnEscapeUnpaused(EntityUid uid, EscapePodComponent component, ref EntityUnpausedEvent args)

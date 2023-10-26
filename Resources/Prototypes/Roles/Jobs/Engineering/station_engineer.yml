@@ -3,12 +3,11 @@
   name: job-name-engineer
   description: job-description-engineer
   playTimeTracker: JobStationEngineer
-  # requirements:
-    # - !type:DepartmentTimeRequirement
-      # department: Engineering
-      # time: 1800
+  requirements:
+    - !type:OverallPlaytimeRequirement
+      time: 10800
   startingGear: StationEngineerGear
-  icon: "StationEngineer"
+  icon: "JobIconStationEngineer"
   supervisors: job-supervisors-ce
   access:
   - Maintenance
@@ -29,6 +28,6 @@
     eyes: ClothingEyesGlassesMeson
     belt: ClothingBeltUtilityEngineering
     ears: ClothingHeadsetEngineering
-  innerclothingskirt: ClothingUniformJumpskirtEngineering
+  innerClothingSkirt: ClothingUniformJumpskirtEngineering
   satchel: ClothingBackpackSatchelEngineeringFilled
   duffelbag: ClothingBackpackDuffelEngineeringFilled

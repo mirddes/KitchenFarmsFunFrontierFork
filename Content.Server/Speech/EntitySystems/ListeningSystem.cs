@@ -18,6 +18,10 @@ public sealed class ListeningSystem : EntitySystem
 
     private void OnSpeak(EntitySpokeEvent ev)
     {
+        if (ev.Canilunzt)
+        {
+            return;
+        }
         PingListeners(ev.Source, ev.Message, ev.ObfuscatedMessage);
     }
 
@@ -53,7 +57,7 @@ public sealed class ListeningSystem : EntitySystem
                 continue;
             }
 
-            if (obfuscatedEv != null && distance > ChatSystem.WhisperRange)
+            if (obfuscatedEv != null && distance > ChatSystem.WhisperClearRange)
                 RaiseLocalEvent(listenerUid, obfuscatedEv);
             else
                 RaiseLocalEvent(listenerUid, ev);

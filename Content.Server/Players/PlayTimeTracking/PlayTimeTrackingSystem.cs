@@ -2,11 +2,12 @@ using System.Linq;
 using Content.Server.Afk;
 using Content.Server.Afk.Events;
 using Content.Server.GameTicking;
-using Content.Server.Roles;
+using Content.Server.Mind;
 using Content.Shared.CCVar;
 using Content.Shared.GameTicking;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
+using Content.Shared.Players;
 using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Roles;
 using Robust.Server.GameObjects;
@@ -27,6 +28,7 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
     [Dependency] private readonly IPlayerManager _playerManager = default!;
     [Dependency] private readonly IPrototypeManager _prototypes = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
+    [Dependency] private readonly MindSystem _minds = default!;
     [Dependency] private readonly PlayTimeTrackingManager _tracking = default!;
 
     public override void Initialize()
@@ -77,14 +79,17 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
         return state.CurrentState is MobState.Alive or MobState.Critical;
     }
 
-    public IEnumerable<string> GetTimedRoles(Mind.Mind mind)
+    public IEnumerable<string> GetTimedRoles(EntityUid mindId)
     {
-        foreach (var role in mind.AllRoles)
+        var ev = new MindGetAllRolesEvent(new List<RoleInfo>());
+        RaiseLocalEvent(mindId, ref ev);
+
+        foreach (var role in ev.Roles)
         {
-            if (role is not IRoleTimer timer)
+            if (string.IsNullOrWhiteSpace(role.PlayTimeTrackerId))
                 continue;
 
-            yield return _prototypes.Index<PlayTimeTrackerPrototype>(timer.Timer).ID;
+            yield return _prototypes.Index<PlayTimeTrackerPrototype>(role.PlayTimeTrackerId).ID;
         }
     }
 
@@ -95,23 +100,19 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
         if (contentData?.Mind == null)
             return Enumerable.Empty<string>();
 
-        return GetTimedRoles(contentData.Mind);
+        return GetTimedRoles(contentData.Mind.Value);
     }
 
     private void OnRoleRemove(RoleRemovedEvent ev)
     {
-        if (ev.Mind.Session == null)
-            return;
-
-        _tracking.QueueRefreshTrackers(ev.Mind.Session);
+        if (_minds.TryGetSession(ev.Mind, out var session))
+            _tracking.QueueRefreshTrackers(session);
     }
 
     private void OnRoleAdd(RoleAddedEvent ev)
     {
-        if (ev.Mind.Session == null)
-            return;
-
-        _tracking.QueueRefreshTrackers(ev.Mind.Session);
+        if (_minds.TryGetSession(ev.Mind, out var session))
+            _tracking.QueueRefreshTrackers(session);
     }
 
     private void OnRoundEnd(RoundRestartCleanupEvent ev)
@@ -153,6 +154,7 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
         _tracking.QueueRefreshTrackers(ev.PlayerSession);
         // Send timers to client when they join lobby, so the UIs are up-to-date.
         _tracking.QueueSendTimers(ev.PlayerSession);
+        _tracking.QueueSendWhitelist(ev.PlayerSession); // Nyanotrasen - Send whitelist
     }
 
     public bool IsAllowed(IPlayerSession player, string role)
@@ -164,7 +166,9 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
 
         var playTimes = _tracking.GetTrackerTimes(player);
 
-        return JobRequirements.TryRequirementsMet(job, playTimes, out _, _prototypes);
+        var isWhitelisted = player.ContentData()?.Whitelisted ?? false; // DeltaV - Whitelist requirement
+
+        return JobRequirements.TryRequirementsMet(job, playTimes, out _, EntityManager, _prototypes, isWhitelisted);
     }
 
     public HashSet<string> GetDisallowedJobs(IPlayerSession player)
@@ -174,6 +178,7 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
             return roles;
 
         var playTimes = _tracking.GetTrackerTimes(player);
+        var isWhitelisted = player.ContentData()?.Whitelisted ?? false; // DeltaV - Whitelist requirement
 
         foreach (var job in _prototypes.EnumeratePrototypes<JobPrototype>())
         {
@@ -181,7 +186,7 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
             {
                 foreach (var requirement in job.Requirements)
                 {
-                    if (JobRequirements.TryRequirementMet(requirement, playTimes, out _, _prototypes))
+                    if (JobRequirements.TryRequirementMet(requirement, playTimes, out _, EntityManager, _prototypes, isWhitelisted))
                         continue;
 
                     goto NoRole;
@@ -204,9 +209,11 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
         if (!_tracking.TryGetTrackerTimes(player, out var playTimes))
         {
             // Sorry mate but your playtimes haven't loaded.
-            Logger.ErrorS("playtime", $"Playtimes weren't ready yet for {player} on roundstart!");
+            Log.Error($"Playtimes weren't ready yet for {player} on roundstart!");
             playTimes ??= new Dictionary<string, TimeSpan>();
         }
+
+        var isWhitelisted = player.ContentData()?.Whitelisted ?? false; // DeltaV - Whitelist requirement
 
         for (var i = 0; i < jobs.Count; i++)
         {
@@ -219,7 +226,7 @@ public sealed class PlayTimeTrackingSystem : EntitySystem
 
             foreach (var requirement in jobber.Requirements)
             {
-                if (JobRequirements.TryRequirementMet(requirement, playTimes, out _, _prototypes))
+                if (JobRequirements.TryRequirementMet(requirement, playTimes, out _, EntityManager, _prototypes, isWhitelisted))
                     continue;
 
                 jobs.RemoveSwap(i);

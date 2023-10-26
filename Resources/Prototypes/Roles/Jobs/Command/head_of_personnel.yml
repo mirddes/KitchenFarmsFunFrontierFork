@@ -6,18 +6,19 @@
   requirements:
     - !type:OverallPlaytimeRequirement
       time: 36000
+    - !type:WhitelistRequirement
   weight: 20
   startingGear: HoPGear
-  icon: "HeadOfPersonnel"
+  icon: "JobIconHeadOfPersonnel"
   requireAdminNotify: true
   supervisors: job-supervisors-captain
-  whitelistRequired: true
   canBeAntag: false
   access:
   - Command
   - HeadOfPersonnel
   - Bar
   - Service
+  - Frontier
   - Maintenance
   - Janitor
   - Theatre
@@ -38,8 +39,20 @@
   - Brig
   - Cargo
   - Atmospherics
-  - Cargo
   - Medical
+  - EmergencyShuttleRepealAll
+  - Captain
+  - ChiefEngineer
+  - ChiefMedicalOfficer
+#  - HeadOfSecurity Whitelist for sheriff only.
+  - ResearchDirector
+  - Armory
+  special:
+  - !type:AddImplantSpecial
+    implants: [ MindShieldImplant, TrackingImplant ]
+  - !type:AddComponentSpecial
+    components:
+      - type: CommandStaff
 
 - type: startingGear
   id: HoPGear
@@ -49,7 +62,9 @@
     shoes: ClothingShoesColorBrown
     head: ClothingHeadHatHopcap
     id: HoPPDA
-    ears: ClothingHeadsetAltCommand
-  innerclothingskirt: ClothingUniformJumpskirtHoP
+    ears: ClothingHeadsetAltCentCom
+    eyes: ClothingEyesGlassesSunglasses
+    belt: BoxFolderClipboard
+  innerClothingSkirt: ClothingUniformJumpskirtHoP
   satchel: ClothingBackpackSatchelHOPFilled
   duffelbag: ClothingBackpackDuffelHOPFilled

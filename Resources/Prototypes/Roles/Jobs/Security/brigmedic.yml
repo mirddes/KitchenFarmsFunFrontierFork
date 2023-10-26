@@ -4,14 +4,10 @@
   description: job-description-brigmedic
   playTimeTracker: JobBrigmedic
   requirements:
-    - !type:DepartmentTimeRequirement
-      department: Medical
-      time: 18000
-    - !type:DepartmentTimeRequirement
-      department: Security
-      time: 7200
+    - !type:OverallPlaytimeRequirement
+      time: 21600
   startingGear: BrigmedicGear
-  icon: "Brigmedic"
+  icon: "JobIconBrigmedic"
   supervisors: job-supervisors-hos
   canBeAntag: false
   access:
@@ -20,3 +16,6 @@
   - Brig
   - Maintenance
   - External
+  special:
+  - !type:AddImplantSpecial
+    implants: [ MindShieldImplant, TrackingImplant ]
